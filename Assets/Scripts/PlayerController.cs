@@ -110,7 +110,7 @@ public class PlayerController : MonoBehaviour {
 
         // retrieve input
         MyInput input = PlayerInput;
-        Quaternion desiredLookRotation = Quaternion.LookRotation(input.lookAdjusted, transform.up);
+        //Quaternion desiredLookRotation = Quaternion.LookRotation(input.lookAdjusted, transform.up);
 
         if (isGrounded)
         #region GroundMovement
@@ -125,8 +125,16 @@ public class PlayerController : MonoBehaviour {
             if (input.strength > 0)
             #region Walking
             {
-                Quaternion rotationStep = Quaternion.RotateTowards(myRigidbody.rotation, desiredLookRotation, 10 * Time.deltaTime);
-                myRigidbody.MoveRotation(rotationStep);
+                Quaternion newRotation;
+                #region RotateRigidBody
+                // get current rotation
+                newRotation = myRigidbody.rotation;
+                // direct it into the movement direction relative to camera
+                newRotation.SetLookRotation(input.lookAdjusted, Vector3.up);
+                // apply the rotation
+                myRigidbody.MoveRotation(newRotation);
+                #endregion
+
                 // try to prevent moving into tight spots or diving into walls by proactively resolving collisions
                 RaycastHit hit;
                 if (myRigidbody.SweepTest(input.groundAdjusted, out hit, move.magnitude))
