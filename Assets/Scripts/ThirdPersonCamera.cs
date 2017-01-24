@@ -62,6 +62,20 @@ public class ThirdPersonCamera : MonoBehaviour {
         }
     }
 
+    private bool TargetReport
+    {
+        get
+        {
+            Vector3 focus = target.position + focusOffset;
+
+            Vector3 targetToCamHorizontalVector = transform.position - focus;
+            targetToCamHorizontalVector.y = 0;
+
+            Vector3 moveSinceLastUpdate = target.position - lastUpdate;
+            return false;
+        }
+    }
+
     void Start()
     {
         focus = target.position + focusOffset;
@@ -79,7 +93,7 @@ public class ThirdPersonCamera : MonoBehaviour {
         MyInput input = CamInput;
 
         float moveSinceLastUpdate = Vector3.Distance(lastUpdate, target.position);
-        if (moveSinceLastUpdate > 0)
+        if (moveSinceLastUpdate > 0.0f)
         #region UpdateCamFocus
         {
             focus = target.position + focusOffset;
