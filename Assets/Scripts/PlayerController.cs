@@ -122,11 +122,11 @@ public class PlayerController : MonoBehaviour {
                 move = input.groundAdjusted * distance;
             }
          
-            if (input.strength > 0)
+            if (input.strength > 0.2f)
             #region Walking
             {
-                Quaternion newRotation;
                 #region RotateRigidBody
+                Quaternion newRotation;
                 // get current rotation
                 newRotation = myRigidbody.rotation;
                 // direct it into the movement direction relative to camera

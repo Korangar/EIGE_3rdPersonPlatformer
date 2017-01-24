@@ -43,7 +43,11 @@ public class ThirdPersonCamera : MonoBehaviour {
     private Vector3 focus;
     private Vector3 lastUpdate;
     private Vector3 camVelocity = Vector3.zero;
-    private Vector3 desiredCamPosition;
+    private Vector3 targetRelativeOffset;
+
+    #region debug
+    Vector3 rotatedVector;
+    #endregion
 
     private MyInput CamInput
     {
@@ -61,73 +65,74 @@ public class ThirdPersonCamera : MonoBehaviour {
     void Start()
     {
         focus = target.position + focusOffset;
-        Vector3 targetRelativeOffset = target.TransformVector(camOffest);
-        desiredCamPosition = focus + targetRelativeOffset;
-        Debug.DrawRay(focus, camOffest);
-        Debug.DrawRay(focus, targetRelativeOffset);
+        targetRelativeOffset = target.TransformVector(camOffest);
         lastUpdate = target.position;
+
+        #region debug
+        rotatedVector = Vector3.right;
+        #endregion
     }
 
     // Update is called once per frame
-	void Update () {
+    void Update () {
         // get user input
         MyInput input = CamInput;
-        
+
         float moveSinceLastUpdate = Vector3.Distance(lastUpdate, target.position);
         if (moveSinceLastUpdate > 0)
+        #region UpdateCamFocus
         {
-            lastUpdate = target.position;
             focus = target.position + focusOffset;
-            // desired cam position is behind target.
-            desiredCamPosition = focus + target.TransformVector(camOffest);
+            targetRelativeOffset = target.TransformVector(camOffest);
+            lastUpdate = target.position;
         }
+        #endregion
 
+        #region UserRotatesCamera
+        {
+            if (horizontal.enabled)
+            {
+                // rotate transform horizontally
+                float lookChange = input.rotation.x * Time.deltaTime;
+                //transform.RotateAround(focus, Vector3.up, lookChange);
+                targetRelativeOffset = Quaternion.AngleAxis(lookChange, Vector3.up) * targetRelativeOffset;
+            }
 
-        // teleport to target if too far away
+            if (vertical.enabled)
+            {
+                // rotate transform vertically
+                float lookChange = input.rotation.y * Time.deltaTime;
+                //transform.RotateAround(focus, transform.right, lookChange);
+                targetRelativeOffset = Quaternion.AngleAxis(lookChange, transform.right) * targetRelativeOffset;
+            }
+            Debug.DrawRay(focus, targetRelativeOffset, Color.cyan);
+        }
+        #endregion
+
+        // set the desired cam position
+        Vector3 desiredCamPosition = focus + targetRelativeOffset;
+        
         float distanceFromTarget = Vector3.Distance(transform.position, focus);
         if(distanceFromTarget > catchupDistance)
         {
+            // teleport to target if too far away
             transform.position = desiredCamPosition;
-            //transform.LookAt(focus);
         }
-        
-        #region UserRotatesCamera
+        else
+        #region MoveCamera
         {
-            bool userChangedRotation = false;
-            if (horizontal.enabled && Mathf.Abs(input.raw.x) > 0.15f)
-            {
-                // rotate transform horizontally
-                float horzLookChange = input.rotation.x * Time.deltaTime;
-                transform.RotateAround(focus, Vector3.up, horzLookChange);
-                userChangedRotation = true;
-            }
 
-            if (vertical.enabled && Mathf.Abs(input.raw.y) > 0.3f)
-            {
-                // rotate transform vertically
-                float vertLookChange = input.rotation.y * Time.deltaTime;
-                transform.RotateAround(focus, transform.right, vertLookChange);
-                userChangedRotation = true;
-            }
+            // move to the desired position
+            transform.position = Vector3.SmoothDamp(
+                transform.position, 
+                desiredCamPosition, 
+                ref camVelocity, 
+                camSmoothTime, 
+                camSpeed);
 
-            if (userChangedRotation)
-            {
-                // update desired cam position with user preference in mind
-            //    desiredCamPosition = target.forward * camOffest.z + target.right * camOffest.y * target.up;
-            }
+            Debug.DrawRay(transform.position, camVelocity, Color.red);
         }
         #endregion
-        
-        Debug.DrawLine(focus, desiredCamPosition, Color.cyan);
-        // allways keep moving to the desired position
-        transform.position = Vector3.SmoothDamp(
-            transform.position, 
-            desiredCamPosition, 
-            ref camVelocity, 
-            camSmoothTime, 
-            camSpeed);
-
-        Debug.DrawRay(transform.position, camVelocity, Color.red);
 
         // allways point the camera on the target
         transform.LookAt(focus);
@@ -136,6 +141,5 @@ public class ThirdPersonCamera : MonoBehaviour {
     void OnValidate()
     {
         focus = target.position + focusOffset;
-        desiredCamPosition = focus + camOffest;
     }
 }
