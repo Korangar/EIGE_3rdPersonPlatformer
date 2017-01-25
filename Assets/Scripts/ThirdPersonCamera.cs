@@ -26,7 +26,6 @@ public class ThirdPersonCamera : MonoBehaviour {
     public Vector3 camOffest;
     public float camSpeed = 100;
     public float camSmoothTime = 1;
-    public float catchupDistance = 100;
     public RotationAxis horizontal, vertical;
     #endregion
 
@@ -75,14 +74,19 @@ public class ThirdPersonCamera : MonoBehaviour {
         {
             // set the desired cam position
             Vector3 desiredCamPosition = focus + targetRelativeOffset;
-            
+
             // move to the desired position
-            transform.position = Vector3.SmoothDamp(
+            transform.position = Vector3.MoveTowards(
                 transform.position,
                 desiredCamPosition,
-                ref camVelocity,
-                camSmoothTime,
                 camSpeed * Time.deltaTime);
+
+            //transform.position = Vector3.SmoothDamp(
+            //    transform.position,
+            //    desiredCamPosition,
+            //    ref camVelocity,
+            //    camSmoothTime,
+            //    camSpeed * Time.deltaTime);
             
             // allways point the camera on the target
             transform.LookAt(focus);

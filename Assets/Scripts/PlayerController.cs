@@ -157,8 +157,8 @@ public class PlayerController : MonoBehaviour {
                     Vector3.up * (1 - movement.pounceFactor);
 
                 jumpImpulseDirection.Normalize();
-                // apply velocity impulse;
-                myRigidbody.velocity += jumpImpulseDirection * movement.jumpVelocity;
+                // reset all forces/velocities and apply velocity impulse
+                myRigidbody.velocity = jumpImpulseDirection * movement.jumpVelocity;
                 e_Jump();
             }
             #endregion
