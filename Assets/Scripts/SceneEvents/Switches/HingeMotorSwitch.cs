@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TriggerableHingeMotor : TriggerableSceneBehaviour {
+[RequireComponent(typeof(HingeJoint))]
+public class HingeMotorSwitch : AbstractTriggerableSwitch{
 
     public bool inverseTrigger = false;
     private HingeJoint myHinge;
@@ -13,8 +14,14 @@ public class TriggerableHingeMotor : TriggerableSceneBehaviour {
         myHinge = GetComponent<HingeJoint>();
     }
 
-    public override void TriggerSceneBehaviour(bool trigger)
+    public override void Trigger()
     {
-        myHinge.useMotor = inverseTrigger ? !trigger : trigger;
+        myHinge.useMotor = !inverseTrigger;
     }
+
+    public override void Untrigger()
+    {
+        myHinge.useMotor = inverseTrigger;
+    }
+    
 }
