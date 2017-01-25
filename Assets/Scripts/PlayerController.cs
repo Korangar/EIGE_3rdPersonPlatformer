@@ -10,16 +10,39 @@ public class PlayerController : MonoBehaviour {
         public Vector3 raw, lookAdjusted, groundAdjusted;
         public float strength;
     }
+
+    [System.Serializable]
+    public struct MovementInfo
+    {
+        public float walkVelocity;
+        public float jumpVelocity;
+        public float pounceFactor;
+        public float customGravity;
+    }
+    #endregion
+
+    #region EditorVariables
+    [SerializeField]
+    private MovementInfo movement;
     #endregion
 
     private ThirdPersonCamera myCamera;
     private CapsuleCollider myCollider;
     private MeshRenderer myRenderer;
     private Rigidbody myRigidbody;
+    private bool inputLock = false;
+    private bool vkJump = false;
+    
+    #region StateInfo
+    private bool isGrounded = false;
+    #endregion
+
+    #region Properties
     private Vector3 Position
     {
         get { return myRigidbody.position; }
     }
+    #endregion
 
     #region Events
     public event System.Action e_Death;
@@ -28,61 +51,6 @@ public class PlayerController : MonoBehaviour {
     public event System.Action e_Goal;
     #endregion
 
-    #region InputInfo
-    private bool inputLock = false;
-    private bool vkJump = false;
-    MyInput PlayerInput
-    {
-        get
-        {
-            if (inputLock) { return new MyInput(); }
-
-            // fetch input
-            Vector3 axisInput = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-
-            //get input strength
-            float inputStrength = axisInput.magnitude;
-
-            // quadratic function gives the user higher fidelity with low input while pertaining same maximum magnitude.
-            // apparently this has been used by microsoft when designing controlls for their Xbox racing games.
-            // this step is optional
-            inputStrength *= inputStrength;
-            axisInput.Normalize();
-            axisInput *= inputStrength;
-
-            // make input relative to camera look direction
-            Vector3 lookOrientedInput = myCamera.transform.TransformVector(axisInput);
-            // ignore vertical camera rotation
-            lookOrientedInput.y = 0;
-            lookOrientedInput.Normalize();
-
-            // initialize and return
-            MyInput input = new MyInput();
-            // "raw" axis input
-            input.raw = axisInput;
-            // strength
-            input.strength = axisInput.magnitude;
-            // look oriented input
-            input.lookAdjusted = lookOrientedInput;
-            // get movedirection from look oriented input
-            input.groundAdjusted = Vector3.ProjectOnPlane(lookOrientedInput, nGround);
-            input.groundAdjusted.Normalize();
-            return input;
-        }
-    }
-    #endregion
-
-    #region MovementInfo
-    public float groundWalkVelocity = 3.5f;
-    public float bonusGravityForce = 15;
-    public float jumpVelocity = 7f;
-    [Range(0.0f, 1.0f)]
-    public float pounceFactor = 0.4f;
-    #endregion
-
-    #region StateInfo
-    private bool isGrounded = false;
-    #endregion
     
     // Use this for initialization
     void Start () {
@@ -100,7 +68,10 @@ public class PlayerController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         // get keypress only when on ground to prevent a button queue
-        vkJump = !inputLock && isGrounded && (vkJump || Input.GetButtonDown("Jump"));
+        vkJump = !inputLock && isGrounded && 
+        // dont overwrite jump input once it was pressed under the right conditions
+        // prevents missing presses when update and fixUpdate are not synced
+            (vkJump || Input.GetButtonDown("Jump"));
 	}
 
     void FixedUpdate()
@@ -109,7 +80,7 @@ public class PlayerController : MonoBehaviour {
         DoGroundCheck();
 
         // retrieve input
-        MyInput input = PlayerInput;
+        MyInput input = GetPlayerInput();
         //Quaternion desiredLookRotation = Quaternion.LookRotation(input.lookAdjusted, transform.up);
 
         if (isGrounded)
@@ -118,7 +89,7 @@ public class PlayerController : MonoBehaviour {
             // create movement Vector
             Vector3 move;
             {
-                float distance = Time.fixedDeltaTime * input.strength * groundWalkVelocity;
+                float distance = input.strength * movement.walkVelocity * Time.fixedDeltaTime;
                 move = input.groundAdjusted * distance;
             }
          
@@ -173,18 +144,21 @@ public class PlayerController : MonoBehaviour {
                 myRigidbody.MovePosition(myRigidbody.position + move);
             }
             #endregion
-
-            // dont allow jumping when pushing crates
+            
             if (vkJump)
             #region JumpLaunch
             {
                 // consume the button press
                 vkJump = false;
+                
                 // evaluate the amount of impulse to be directed in movement direction 
-                Vector3 jumpImpulseDirection = move.normalized * input.strength * pounceFactor + Vector3.up * (1 - pounceFactor);
+                Vector3 jumpImpulseDirection = 
+                    move.normalized * input.strength * movement.pounceFactor + 
+                    Vector3.up * (1 - movement.pounceFactor);
+
                 jumpImpulseDirection.Normalize();
                 // apply velocity impulse;
-                myRigidbody.velocity += jumpImpulseDirection * jumpVelocity;
+                myRigidbody.velocity += jumpImpulseDirection * movement.jumpVelocity;
                 e_Jump();
             }
             #endregion
@@ -217,6 +191,46 @@ public class PlayerController : MonoBehaviour {
             e_Goal();
         }
     }
+
+
+    #region Input
+    private MyInput GetPlayerInput()
+    {
+        if (inputLock) { return new MyInput(); }
+
+        // fetch input
+        Vector3 axisInput = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+
+        //get input strength
+        float inputStrength = axisInput.magnitude;
+
+        // quadratic function gives the user higher fidelity with low input while pertaining same maximum magnitude.
+        // apparently this has been used by microsoft when designing controlls for their Xbox racing games.
+        // this step is optional
+        inputStrength *= inputStrength;
+        axisInput.Normalize();
+        axisInput *= inputStrength;
+
+        // make input relative to camera look direction
+        Vector3 lookOrientedInput = myCamera.transform.TransformVector(axisInput);
+        // ignore vertical camera rotation
+        lookOrientedInput.y = 0;
+        lookOrientedInput.Normalize();
+
+        // initialize and return
+        MyInput input = new MyInput();
+        // "raw" axis input
+        input.raw = axisInput;
+        // strength
+        input.strength = axisInput.magnitude;
+        // look oriented input
+        input.lookAdjusted = lookOrientedInput;
+        // get movedirection from look oriented input
+        input.groundAdjusted = Vector3.ProjectOnPlane(lookOrientedInput, nGround);
+        input.groundAdjusted.Normalize();
+        return input;
+    }
+    #endregion
 
     #region PhysicsDuktape
     const float wallSlideCoefficient = 1.1f;
@@ -262,7 +276,7 @@ public class PlayerController : MonoBehaviour {
             
             // standard input orientation should be the horizontal plane in worldspace
             nGround = Vector3.up;
-            myRigidbody.AddForce(0, -bonusGravityForce, 0);
+            myRigidbody.AddForce(0, -movement.customGravity, 0);
         }
         #endregion
     }
@@ -272,6 +286,8 @@ public class PlayerController : MonoBehaviour {
     public void Event_Death()
     {
         Debug.Log("Death.");
+        GameObject rswpn = GameObject.FindGameObjectWithTag("Respawn");
+        StartCoroutine(Routine_Respawn(rswpn.transform.position));
     }
 
     public void Event_Goal()
@@ -302,6 +318,16 @@ public class PlayerController : MonoBehaviour {
             model.position = Vector3.Lerp(originalPos, g, t);
             yield return null;
         }
+    }
+
+    IEnumerator Routine_Respawn(Vector3 respawnPosition)
+    {
+        bool prevLock = inputLock;
+        inputLock = true;
+        yield return new WaitForEndOfFrame();
+        transform.position = respawnPosition;
+        yield return new WaitForSeconds(1);
+        inputLock = prevLock;
     }
     #endregion
 }
