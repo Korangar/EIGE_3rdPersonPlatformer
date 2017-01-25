@@ -22,7 +22,7 @@ public class PressurePlateTrigger : AbstractTrigger {
         if (rigidbody)
         {
             currentWeight += rigidbody.mass;
-            Trigger = currentWeight >= weightToTrigger;
+            checkTrigger();
         }
     }
 
@@ -32,7 +32,20 @@ public class PressurePlateTrigger : AbstractTrigger {
         if (rigidbody)
         {
             currentWeight -= rigidbody.mass;
-            Trigger = currentWeight >= weightToTrigger;
+            checkTrigger();
+        }
+    }
+
+    public void checkTrigger()
+    {
+        Trigger = currentWeight >= weightToTrigger;
+        if (Trigger)
+        {
+            modelTransform.Translate(0, -0.1f, 0);
+        }
+        else
+        {
+            modelTransform.Translate(0, -0.1f, 0);
         }
     }
 }
