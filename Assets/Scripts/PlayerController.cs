@@ -24,17 +24,23 @@ public class PlayerController : MonoBehaviour {
     #region EditorVariables
     [SerializeField]
     private MovementInfo movement;
+    public bool inputLock = false;
     #endregion
 
     private ThirdPersonCamera myCamera;
     private CapsuleCollider myCollider;
     private MeshRenderer myRenderer;
     private Rigidbody myRigidbody;
-    private bool inputLock = false;
     private bool vkJump = false;
-    
+
+    #region CrateGrabPull
+    private Coroutine waitingForGrabInput;
+    private RaycastHit grabInfo;
+    #endregion
+
     #region StateInfo
     private bool isGrounded = false;
+    private bool isGrabbingSomething = false;
     #endregion
 
     #region Properties
@@ -46,9 +52,6 @@ public class PlayerController : MonoBehaviour {
 
     #region Events
     public event System.Action e_Death;
-    public event System.Action e_Jump; 
-    public event System.Action e_Land;
-    public event System.Action e_Goal;
     #endregion
 
     
@@ -60,9 +63,6 @@ public class PlayerController : MonoBehaviour {
         myRigidbody = GetComponent<Rigidbody>();
 
         e_Death += Event_Death;
-        e_Goal += Event_Goal;
-        e_Jump += Event_Jump;
-        e_Land += Event_Land;
     }
 	
 	// Update is called once per frame
@@ -83,7 +83,26 @@ public class PlayerController : MonoBehaviour {
         MyInput input = GetPlayerInput();
         //Quaternion desiredLookRotation = Quaternion.LookRotation(input.lookAdjusted, transform.up);
 
-        if (isGrounded)
+        if (isGrabbingSomething)
+        #region PushingCrates
+        {
+            if (!isGrounded || !Input.GetButton("Fire1"))
+            {
+                isGrabbingSomething = false;
+            }
+            else
+            {
+                Vector3 move;
+                {
+                    float distance = input.strength * movement.walkVelocity * Time.fixedDeltaTime;
+                    move = input.groundAdjusted * distance;
+                }
+                grabInfo.rigidbody.MovePosition(grabInfo.transform.position + move);
+                myRigidbody.MovePosition(myRigidbody.position + move);
+            }
+        }
+        #endregion
+        else if (isGrounded)
         #region GroundMovement
         {
             // create movement Vector
@@ -92,7 +111,7 @@ public class PlayerController : MonoBehaviour {
                 float distance = input.strength * movement.walkVelocity * Time.fixedDeltaTime;
                 move = input.groundAdjusted * distance;
             }
-         
+
             if (input.strength > 0.2f)
             #region Walking
             {
@@ -116,7 +135,17 @@ public class PlayerController : MonoBehaviour {
                         // do not interact with triggers
                         goto endSweepTestHandling;
                     }
-                    // TODO check for different tags here
+
+                    // check for different tags
+                    switch (hit.collider.tag)
+                    {
+                        case "Crate":
+                            // evaluate if it can be grabbed 
+                            if(waitingForGrabInput != null) StopCoroutine(waitingForGrabInput);
+                            waitingForGrabInput = StartCoroutine(R_WaitForGrabInput(hit.rigidbody));
+                            break;
+                    }
+
 
                     // evaluate wheter obstacle is bigger than climbing threshold
                     if (hit.point.y - Position.y >= myCollider.radius)
@@ -159,7 +188,6 @@ public class PlayerController : MonoBehaviour {
                 jumpImpulseDirection.Normalize();
                 // reset all forces/velocities and apply velocity impulse
                 myRigidbody.velocity = jumpImpulseDirection * movement.jumpVelocity;
-                e_Jump();
             }
             #endregion
         }
@@ -182,16 +210,6 @@ public class PlayerController : MonoBehaviour {
             e_Death();
         }
     }
-
-    void OnTriggerEnter(Collider c)
-    {
-        if (c.CompareTag("Goal"))
-        {
-            StartCoroutine(Routine_GoalAnimation(c.transform.position));
-            e_Goal();
-        }
-    }
-
 
     #region Input
     private MyInput GetPlayerInput()
@@ -257,11 +275,12 @@ public class PlayerController : MonoBehaviour {
         #region OnGround
         {
             if (!isGrounded)
+            #region FeetTouchedGround
             {
-                #region FeetTouchedGround
                 myRigidbody.velocity = Vector3.zero;
-                #endregion
             }
+            #endregion
+            
             isGrounded = true;
             nGround = hit.normal;
 
@@ -285,49 +304,26 @@ public class PlayerController : MonoBehaviour {
     #region EventHandling
     public void Event_Death()
     {
+        if (inputLock) return;
         Debug.Log("Death.");
         GameObject rswpn = GameObject.FindGameObjectWithTag("Respawn");
-        StartCoroutine(Routine_Respawn(rswpn.transform.position));
-    }
-
-    public void Event_Goal()
-    {
-
-    }
-
-    public void Event_Jump()
-    {
-
-    }
-
-    public void Event_Land()
-    {
-
+        transform.position = rswpn.transform.position;
     }
     #endregion
 
     #region RoutineDefinitions
-    IEnumerator Routine_GoalAnimation(Vector3 g)
+    IEnumerator R_WaitForGrabInput(Rigidbody crate)
     {
-        Transform model = GetComponentInChildren<MeshRenderer>().transform;
-        Vector3 originalPos = model.position;
-        inputLock = true;
-        
-        for (float t = 0; t <= 1; t += Time.deltaTime/2.5f)
+        yield return new WaitUntil(() => Input.GetButtonDown("Fire1"));
+        RaycastHit h;
+        if(Physics.Raycast(transform.position, crate.transform.position - transform.position, out h, 1))
         {
-            model.position = Vector3.Lerp(originalPos, g, t);
-            yield return null;
+            if(crate == h.rigidbody)
+            {
+                isGrabbingSomething = true;
+                grabInfo = h;
+            }
         }
-    }
-
-    IEnumerator Routine_Respawn(Vector3 respawnPosition)
-    {
-        bool prevLock = inputLock;
-        inputLock = true;
-        yield return new WaitForEndOfFrame();
-        transform.position = respawnPosition;
-        yield return new WaitForSeconds(1);
-        inputLock = prevLock;
     }
     #endregion
 }

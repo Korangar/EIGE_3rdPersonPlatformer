@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class PressurePlateTrigger : AbstractTrigger {
 
+    public Vector3 defaultPosition = new Vector3(0, -0.15f, 0);
+    public Vector3 pressedPosition = new Vector3(0, -0.2f, 0);
     public float weightToTrigger = 1;
-    public Vector3 buttonPressedPosition = new Vector3(0, -0.9f, 0);
     
     private float currentWeight = 0;
     private Transform modelTransform;
@@ -39,13 +40,6 @@ public class PressurePlateTrigger : AbstractTrigger {
     public void checkTrigger()
     {
         Trigger = currentWeight >= weightToTrigger;
-        if (Trigger)
-        {
-            modelTransform.Translate(0, -0.1f, 0);
-        }
-        else
-        {
-            modelTransform.Translate(0, -0.1f, 0);
-        }
+        modelTransform.localPosition = defaultPosition + (Trigger ? pressedPosition : Vector3.zero);
     }
 }
