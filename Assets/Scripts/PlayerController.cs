@@ -49,11 +49,6 @@ public class PlayerController : MonoBehaviour {
         get { return myRigidbody.position; }
     }
     #endregion
-
-    #region Events
-    public event System.Action e_Death;
-    #endregion
-
     
     // Use this for initialization
     void Start () {
@@ -61,8 +56,6 @@ public class PlayerController : MonoBehaviour {
         myRenderer = GetComponentInChildren<MeshRenderer>();
         myCollider = GetComponent<CapsuleCollider>();
         myRigidbody = GetComponent<Rigidbody>();
-
-        e_Death += Event_Death;
     }
 	
 	// Update is called once per frame
@@ -95,7 +88,7 @@ public class PlayerController : MonoBehaviour {
                 Vector3 move;
                 {
                     float distance = input.strength * movement.walkVelocity * Time.fixedDeltaTime;
-                    move = input.groundAdjusted * distance;
+                    move = input.groundAdjusted * distance * 0.25f;
                 }
                 grabInfo.rigidbody.MovePosition(grabInfo.transform.position + move);
                 myRigidbody.MovePosition(myRigidbody.position + move);
@@ -207,7 +200,10 @@ public class PlayerController : MonoBehaviour {
     {
         if (c.CompareTag("WorldBounds"))
         {
-            e_Death();
+            if (inputLock) return;
+            Debug.Log("Death.");
+            GameObject rswpn = GameObject.FindGameObjectWithTag("Respawn");
+            transform.position = rswpn.transform.position;
         }
     }
 
@@ -301,22 +297,13 @@ public class PlayerController : MonoBehaviour {
     }
     #endregion
 
-    #region EventHandling
-    public void Event_Death()
-    {
-        if (inputLock) return;
-        Debug.Log("Death.");
-        GameObject rswpn = GameObject.FindGameObjectWithTag("Respawn");
-        transform.position = rswpn.transform.position;
-    }
-    #endregion
-
     #region RoutineDefinitions
     IEnumerator R_WaitForGrabInput(Rigidbody crate)
     {
-        yield return new WaitUntil(() => Input.GetButtonDown("Fire1"));
+        Debug.Log("Hold B to drag");
+        yield return new WaitUntil(() => Input.GetButton("Fire1"));
         RaycastHit h;
-        if(Physics.Raycast(transform.position, crate.transform.position - transform.position, out h, 1))
+        if(Physics.Raycast(transform.position, crate.transform.position - transform.position, out h, 3))
         {
             if(crate == h.rigidbody)
             {
