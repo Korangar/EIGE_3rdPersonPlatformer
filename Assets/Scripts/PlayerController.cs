@@ -79,7 +79,7 @@ public class PlayerController : MonoBehaviour {
         if (isGrabbingSomething)
         #region PushingCrates
         {
-            if (!isGrounded || !Input.GetButton("Fire1"))
+            if (!isGrounded || Input.GetAxis("HoldGrab") < 0.6f)
             {
                 isGrabbingSomething = false;
             }
@@ -301,7 +301,7 @@ public class PlayerController : MonoBehaviour {
     IEnumerator R_WaitForGrabInput(Rigidbody crate)
     {
         Debug.Log("Hold B to drag");
-        yield return new WaitUntil(() => Input.GetButton("Fire1"));
+        yield return new WaitUntil(() => Input.GetAxis("HoldGrab") > 0.9f);
         RaycastHit h;
         if(Physics.Raycast(transform.position, crate.transform.position - transform.position, out h, 3))
         {
