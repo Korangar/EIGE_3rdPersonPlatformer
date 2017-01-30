@@ -17,7 +17,7 @@ public class TRTransform : TimeReverse {
     {
         if (obj != null)
         {
-            Transform trans = (Transform)obj;
+            MyTransform trans = (MyTransform)obj;
             transform.position = trans.position;
             transform.rotation = trans.rotation;
             transform.localScale = trans.localScale;
@@ -26,6 +26,19 @@ public class TRTransform : TimeReverse {
 
     public override object Save()
     {
-        return transform;
+        MyTransform trans = new MyTransform();
+        trans.position = transform.position;
+        trans.rotation = transform.rotation;
+        trans.localScale = transform.localScale;
+
+        return trans;
     }
+
+    struct MyTransform
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 localScale;
+    }
+
 }

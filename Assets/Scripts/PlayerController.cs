@@ -198,18 +198,23 @@ public class PlayerController : MonoBehaviour {
 
     void OnTriggerExit(Collider c)
     {
-        if (c.CompareTag("WorldBounds"))
-        {
-            if (inputLock) return;
-            Debug.Log("Death.");
-            GameObject rswpn = GameObject.FindGameObjectWithTag("Respawn");
-            transform.position = rswpn.transform.position;
-        }
+        //if (c.CompareTag("WorldBounds"))
+        //{
+        //    if (inputLock) return;
+        //    Debug.Log("Death.");
+        //    GameObject rswpn = GameObject.FindGameObjectWithTag("Respawn");
+        //    transform.position = rswpn.transform.position;
+
+        //    foreach (TimeReverse TR in GetComponents<TimeReverse>())
+        //        TR.Clear();
+        //}
     }
 
     #region Input
     private MyInput GetPlayerInput()
     {
+        inputLock = Input.GetButton("TimeControl");
+
         if (inputLock) { return new MyInput(); }
 
         // fetch input

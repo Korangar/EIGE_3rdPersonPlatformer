@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CircularBuffer <T> :  {
+public class CircularBuffer <T> {
 
     private T[] buffer;
     int start, end;
@@ -39,6 +39,13 @@ public class CircularBuffer <T> :  {
 
         int index = (end - 1 + buffer.Length) % buffer.Length;
         return buffer[index];
+    }
+
+    public void Clear()
+    {
+        buffer = new T[buffer.Length];
+        start = 0;
+        end = 0;
     }
 
     public int Count
