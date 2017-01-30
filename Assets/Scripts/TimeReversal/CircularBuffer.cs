@@ -21,7 +21,7 @@ public class CircularBuffer <T> {
 
         if (start == end)
             start = (start + 1) % buffer.Length;
-        
+                
         buffer[end] = obj;
     }
 
@@ -30,7 +30,11 @@ public class CircularBuffer <T> {
         if (start == end) return default(T);
 
         end = (end - 1 + buffer.Length) % buffer.Length;
-        return buffer[end];
+
+        T output = buffer[end];
+
+        buffer[end] = default(T);
+        return output;
     }
 
     public T Peek()

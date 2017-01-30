@@ -1,31 +1,44 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public abstract class TimeReverse : MonoBehaviour {
+    public abstract void Clear();
+}
 
-    private CircularBuffer<object> history;
+public abstract class TimeReverse<T> : TimeReverse
+{
+    private CircularBuffer<T> history;
+    private int frameCounter;
+    [SerializeField]
+    public static int ReverseSpeed = 1;
     Rigidbody rigit;
 
     public void InitTR()
     {
-        history = new CircularBuffer<object>(150);
+        history = new CircularBuffer<T>(150);
         rigit = GetComponent<Rigidbody>();
     }
 
     public void UpdateTR()
     {
-        if (Input.GetAxis("TimeControl") > 0.9f)
+        int input = (int)(Input.GetAxis("TimeControl") * 10);
+
+        if (input > 0)
         {
             if (history.Count > 0)
             {
                 disableRigit();
 
-                Debug.Log(history.Peek());
-                Load(history.Pop());
+                for (int i = 0; i < input; i++)
+                {
+                    Load(history.Pop());
+                }
             }
             else
             {
+                Debug.Log("HistoryEnd");
                 enableRigit();
             }
         }
@@ -33,6 +46,10 @@ public abstract class TimeReverse : MonoBehaviour {
         {
             enableRigit();
 
+            frameCounter++;
+            frameCounter %= ReverseSpeed;
+
+            if (frameCounter == 0)
             history.Push(Save());
         }
     }
@@ -42,8 +59,17 @@ public abstract class TimeReverse : MonoBehaviour {
         if (!rigit) return;
 
         rigit.isKinematic = false;
-        rigit.useGravity = true;
-        rigit.detectCollisions = true;
+        //rigit.useGravity = true;
+        //rigit.detectCollisions = true;
+
+        foreach (MonoBehaviour c in GetComponents<MonoBehaviour>())
+        {
+            if (c is TimeReverse<T>)
+                continue;
+
+            c.enabled = true;
+        }
+
     }
 
     private void disableRigit()
@@ -51,15 +77,25 @@ public abstract class TimeReverse : MonoBehaviour {
         if (!rigit) return;
 
         rigit.isKinematic = true;
-        rigit.useGravity = false;
-        rigit.detectCollisions = false;
+        //rigit.useGravity = false;
+        //rigit.detectCollisions = false;
+
+        foreach (MonoBehaviour c in GetComponents<MonoBehaviour>())
+        {
+            if (c is TimeReverse<T>)
+                continue;
+
+            c.enabled = false;
+        }
+
     }
 
-    public void Clear()
+    public override void Clear()
     {
         history.Clear();
     }
 
-    public abstract void Load(object obj);
-    public abstract object Save();
+    public abstract void Load(T obj);
+    public abstract T Save();
 }
+
