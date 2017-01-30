@@ -1,13 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
-public class TRPickUp : TimeReverse<MyEnabled>
-{
+public class TRPickUp : TimeReverse<MyEnabled>{
+    PickupScript pu;
 
     void Awake()
     {
         InitTR();
+        pu = GetComponent<PickupScript>();
     }
 
     void Update()
@@ -15,30 +17,29 @@ public class TRPickUp : TimeReverse<MyEnabled>
         UpdateTR();
     }
 
-    public override void Load(MyEnabled trans)
+    public override void Load(MyEnabled obj)
     {
-        if (trans == null) return;
+        if (obj == null) return;
 
-        transform.position = trans.position;
-        transform.rotation = trans.rotation;
-        transform.localScale = trans.localScale;
+        
+
+        pu.IsActive = obj.enabled;
+
     }
 
     public override MyEnabled Save()
     {
-        MyEnabled trans = new MyEnabled();
-        trans.position = transform.position;
-        trans.rotation = transform.rotation;
-        trans.localScale = transform.localScale;
-
-        return trans;
+        return new MyEnabled(pu.IsActive);
     }
 
 }
 
 public class MyEnabled
 {
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 localScale;
+    public bool enabled;
+
+    public MyEnabled(bool en)
+    {
+        enabled = en;
+    }
 }

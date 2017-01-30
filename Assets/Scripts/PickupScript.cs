@@ -3,6 +3,39 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PickupScript : MonoBehaviour {
+
+    private bool isActive;
+
+    public bool IsActive
+    {
+        get { return isActive; }
+        set {
+            isActive = value;
+
+            Collider col = GetComponent<Collider>();
+            if (col) col.enabled = value;
+
+            MeshRenderer rndr = GetComponentInChildren<MeshRenderer>();
+            if (rndr) rndr.enabled = value;
+
+            Light light = GetComponentInChildren<Light>();
+            if (light) light.enabled = value;
+
+            ParticleSystem prtcl = GetComponentInChildren<ParticleSystem>();
+            if (prtcl)
+            {
+                if (value) prtcl.Play();
+                else prtcl.Stop();
+            }
+
+        }
+    }
+
+    void Awake()
+    {
+        IsActive = true;
+    }
+
     void OnTriggerEnter(Collider c)
     {
         if(c.tag == "Player")
@@ -13,18 +46,9 @@ public class PickupScript : MonoBehaviour {
                 audio.Play();
             }
 
-            Collider col = GetComponent<Collider>();
-            if (col) col.enabled = false;
-
-            MeshRenderer rndr = GetComponentInChildren<MeshRenderer>();
-            if (rndr) rndr.enabled = false;
-
-            Light light = GetComponentInChildren<Light>();
-            if (light) light.enabled = false;
+            IsActive = false;
 
             ParticleSystem prtcl = GetComponentInChildren<ParticleSystem>();
-            if (prtcl) prtcl.Stop();
-
             StartCoroutine(R_PlayerShine(c.transform, prtcl, 10));
         }
     }
