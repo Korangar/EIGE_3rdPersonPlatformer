@@ -10,8 +10,8 @@ public class LevelExit : MonoBehaviour {
         {
             StartCoroutine(R_AnyKey());
             c.GetComponent<PlayerController>().enabled = false;
+            c.GetComponent<Rigidbody>().useGravity = false;
             Destroy(c.GetComponent<ConstantForce>(), 0.1f);
-            Destroy(c.GetComponent<Rigidbody>(), 0.1f);
         }
     }
 

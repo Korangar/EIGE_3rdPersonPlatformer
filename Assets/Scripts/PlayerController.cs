@@ -46,7 +46,13 @@ public class PlayerController : MonoBehaviour {
     #region Properties
     private Vector3 Position
     {
-        get { return myRigidbody.position; }
+        get
+        {
+            if (myRigidbody)
+                return myRigidbody.position;
+            else
+                return transform.position;
+        }
     }
     #endregion
     
@@ -69,6 +75,8 @@ public class PlayerController : MonoBehaviour {
 
     void FixedUpdate()
     {
+        if (!myRigidbody) return;
+
         // update ground information
         DoGroundCheck();
 
@@ -91,7 +99,7 @@ public class PlayerController : MonoBehaviour {
                     move = input.groundAdjusted * distance * 0.25f;
                 }
                 grabInfo.rigidbody.MovePosition(grabInfo.transform.position + move);
-                myRigidbody.MovePosition(myRigidbody.position + move);
+                myRigidbody.MovePosition(Position + move);
             }
         }
         #endregion
@@ -294,7 +302,8 @@ public class PlayerController : MonoBehaviour {
             
             // standard input orientation should be the horizontal plane in worldspace
             nGround = Vector3.up;
-            myRigidbody.AddForce(0, -movement.customGravity, 0);
+            if(myRigidbody)
+                myRigidbody.AddForce(0, -movement.customGravity, 0);
         }
         #endregion
     }
