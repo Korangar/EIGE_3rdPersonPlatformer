@@ -19,6 +19,9 @@ public class PickupScript : MonoBehaviour {
             MeshRenderer rndr = GetComponentInChildren<MeshRenderer>();
             if (rndr) rndr.enabled = false;
 
+            Light light = GetComponentInChildren<Light>();
+            if (light) light.enabled = false;
+
             ParticleSystem prtcl = GetComponentInChildren<ParticleSystem>();
             if (prtcl) prtcl.Stop();
 

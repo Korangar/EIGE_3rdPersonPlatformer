@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityStandardAssets.ImageEffects;
 
 [RequireComponent(typeof(Camera))]
 public class ThirdPersonCamera : MonoBehaviour {
@@ -33,6 +34,10 @@ public class ThirdPersonCamera : MonoBehaviour {
     private Vector3 targetRelativeOffset;
     private PlayerController target;
 
+    private AudioSource audio;
+    private bool isAudioPlaying;
+    private NoiseAndGrain noise;
+
     #region Properties
     private Transform pTransform
     {
@@ -49,6 +54,8 @@ public class ThirdPersonCamera : MonoBehaviour {
     {
         target = FindObjectOfType<PlayerController>();
         targetRelativeOffset = pTransform.TransformVector(camOffest);
+        noise = GetComponent<NoiseAndGrain>();
+        audio = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -90,6 +97,27 @@ public class ThirdPersonCamera : MonoBehaviour {
             
             // allways point the camera on the target
             transform.LookAt(focus);
+        }
+        #endregion
+
+        #region noise
+        {
+            float tc = Input.GetAxis("TimeControl");
+            noise.enabled = tc != 0;
+            noise.intensityMultiplier = tc * 5 + 2.5f;
+
+            audio.pitch = tc * 2 + 1;
+
+            if (noise.enabled && !isAudioPlaying)
+            {
+                audio.Play();
+                isAudioPlaying = true;
+            }
+            if (!noise.enabled && isAudioPlaying)
+            {
+                audio.Stop();
+                isAudioPlaying = false;
+            }
         }
         #endregion
 
