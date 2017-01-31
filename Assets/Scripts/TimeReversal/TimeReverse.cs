@@ -14,18 +14,20 @@ public abstract class TimeReverse<T> : TimeReverse
     [SerializeField]
     public static int ReverseSpeed = 1;
     Rigidbody rigit;
+    PlayerController player;
 
     public void InitTR()
     {
         history = new CircularBuffer<T>(150);
         rigit = GetComponent<Rigidbody>();
+        player = FindObjectOfType<PlayerController>();
     }
 
     public void UpdateTR()
     {
-        int input = (int)(Input.GetAxis("TimeControl") * 10);
+        int input = (int)Mathf.Ceil(Input.GetAxis("TimeControl") * 10);
 
-        if (input > 0)
+        if (input > 0 && !player.inputLock)
         {
             if (history.Count > 0)
             {
