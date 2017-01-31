@@ -29,22 +29,17 @@ public abstract class TimeReverse<T> : TimeReverse
         {
             if (history.Count > 0)
             {
-                disableRigit();
+                disable();
 
                 for (int i = 0; i < input; i++)
                 {
                     Load(history.Pop());
                 }
             }
-            else
-            {
-                Debug.Log("HistoryEnd");
-                enableRigit();
-            }
         }
         else
         {
-            enableRigit();
+            enable();
 
             frameCounter++;
             frameCounter %= ReverseSpeed;
@@ -54,7 +49,7 @@ public abstract class TimeReverse<T> : TimeReverse
         }
     }
 
-    private void enableRigit()
+    private void enable()
     {
         if (!rigit) return;
 
@@ -72,7 +67,7 @@ public abstract class TimeReverse<T> : TimeReverse
 
     }
 
-    private void disableRigit()
+    private void disable()
     {
         if (!rigit) return;
 
