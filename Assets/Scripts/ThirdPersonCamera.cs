@@ -34,7 +34,7 @@ public class ThirdPersonCamera : MonoBehaviour {
     private Vector3 targetRelativeOffset;
     private PlayerController target;
 
-    private AudioSource audio;
+    private AudioSource sound;
     private bool isAudioPlaying;
     private NoiseAndGrain noise;
 
@@ -55,7 +55,7 @@ public class ThirdPersonCamera : MonoBehaviour {
         target = FindObjectOfType<PlayerController>();
         targetRelativeOffset = pTransform.TransformVector(camOffest);
         noise = GetComponent<NoiseAndGrain>();
-        audio = GetComponent<AudioSource>();
+        sound = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -106,16 +106,16 @@ public class ThirdPersonCamera : MonoBehaviour {
             noise.enabled = tc != 0;
             noise.intensityMultiplier = tc * 5 + 2.5f;
 
-            audio.pitch = tc * 2 + 1;
+            sound.pitch = tc * 2 + 1;
 
             if (noise.enabled && !isAudioPlaying)
             {
-                audio.Play();
+                sound.Play();
                 isAudioPlaying = true;
             }
             if (!noise.enabled && isAudioPlaying)
             {
-                audio.Stop();
+                sound.Stop();
                 isAudioPlaying = false;
             }
         }
