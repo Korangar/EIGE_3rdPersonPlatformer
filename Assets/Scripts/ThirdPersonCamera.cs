@@ -102,21 +102,24 @@ public class ThirdPersonCamera : MonoBehaviour {
 
         #region noise
         {
-            float tc = Input.GetAxis("TimeControl");
-            noise.enabled = tc != 0;
-            noise.intensityMultiplier = tc * 5 + 2.5f;
-
-            sound.pitch = tc * 2 + 1;
-
-            if (noise.enabled && !isAudioPlaying)
+            if (!target.inputLock)
             {
-                sound.Play();
-                isAudioPlaying = true;
-            }
-            if (!noise.enabled && isAudioPlaying)
-            {
-                sound.Stop();
-                isAudioPlaying = false;
+                float tc = Input.GetAxis("TimeControl");
+                noise.enabled = tc != 0;
+                noise.intensityMultiplier = tc * 5 + 2.5f;
+
+                sound.pitch = tc * 2 + 1;
+
+                if (noise.enabled && !isAudioPlaying)
+                {
+                    sound.Play();
+                    isAudioPlaying = true;
+                }
+                if (!noise.enabled && isAudioPlaying)
+                {
+                    sound.Stop();
+                    isAudioPlaying = false;
+                }
             }
         }
         #endregion
